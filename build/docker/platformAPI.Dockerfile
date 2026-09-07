@@ -7,6 +7,8 @@ WORKDIR /app
 RUN pip install "openbb[all]"
 RUN pip install openbb-platform-api
 
+COPY build/docker/merge_provider_credentials.py /app/merge_provider_credentials.py
+
 EXPOSE 6900
 
-ENTRYPOINT ["openbb-api", "--host", "0.0.0.0"]
+ENTRYPOINT ["python", "/app/merge_provider_credentials.py"]

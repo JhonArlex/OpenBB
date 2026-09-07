@@ -35,6 +35,22 @@ OBBSecretStr = Annotated[
 ]
 
 
+def credentials_from_environ(known_keys: list[str] | set[str] | None = None) -> dict[str, SecretStr]:
+    """Read provider keys from the process environment (Dokploy / Compose)."""
+    known = set(known_keys or [])
+    env_credentials: dict[str, SecretStr] = {}
+    for env_key, value in os.environ.items():
+        if not value or not str(value).strip():
+            continue
+        lower_key = env_key.lower()
+        if known and lower_key not in known and not env_key.endswith("API_KEY"):
+            continue
+        if not known and not env_key.endswith("API_KEY"):
+            continue
+        env_credentials[lower_key] = SecretStr(str(value).strip())
+    return env_credentials
+
+
 class CredentialsLoader:
     """Here we create the Credentials model."""
 
@@ -138,14 +154,7 @@ class CredentialsLoader:
             for key in keys
         ]
 
-        env_credentials: dict[str, SecretStr] = {}
-        for env_key, value in os.environ.items():
-            if not value:
-                continue
-            lower_key = env_key.lower()
-            if lower_key in all_keys or env_key.endswith("API_KEY"):
-                canonical_key = lower_key if lower_key in all_keys else lower_key
-                env_credentials[canonical_key] = SecretStr(value)
+        env_credentials = credentials_from_environ(all_keys)
 
         if env_credentials:
             additional.update(env_credentials)
@@ -191,14 +200,12 @@ class Credentials(_Credentials):  # type: ignore
         return False
 
     def model_post_init(self, __context) -> None:
-        """Set unset credentials from environment variables."""
+        """Apply environment credentials after file load (env wins when set)."""
         super().model_post_init(__context)
-        for key, secret in self._env_defaults.items():
-            if key not in self.model_fields:
-                continue
-            current = getattr(self, key, None)
-            if self._is_unset(current):
-                setattr(self, key, secret)
+        merged = dict(self._env_defaults)
+        merged.update(credentials_from_environ(self.model_fields))
+        for key, secret in merged.items():
+            setattr(self, key, secret)
 
     def __repr__(self) -> str:
         """Define the string representation of the credentials."""

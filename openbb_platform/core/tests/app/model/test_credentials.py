@@ -79,3 +79,32 @@ def test_credentials_env_overrides_null():
         creds = Credentials()
 
         assert creds.econdb_api_key.get_secret_value() == "env_econdb_key"
+
+
+def test_credentials_env_overrides_empty_string():
+    """Environment variables replace stored empty-string credentials."""
+    for mod_name in list(sys.modules.keys()):
+        if "openbb_core.app.model.credentials" in mod_name:
+            del sys.modules[mod_name]
+
+    fake_user_settings = json.dumps({"credentials": {"fred_api_key": ""}})
+    with (
+        patch(
+            "openbb_core.app.provider_interface.ProviderInterface"
+        ) as mock_provider_interface,
+        patch("openbb_core.app.extension_loader.ExtensionLoader") as mock_loader,
+        patch("openbb_core.app.model.credentials.Path.exists", return_value=True),
+        patch("builtins.open", mock_open(read_data=fake_user_settings)),
+        patch.dict("os.environ", {"FRED_API_KEY": "env_fred_key"}),
+    ):
+        mock_provider_interface.return_value.credentials = {"fred": ["fred_api_key"]}
+        mock_loader.return_value.obbject_objects = {}
+
+        import openbb_core.app.model.credentials as credentials_module
+
+        importlib.reload(credentials_module)
+        Credentials = credentials_module.Credentials
+
+        creds = Credentials()
+
+        assert creds.fred_api_key.get_secret_value() == "env_fred_key"
