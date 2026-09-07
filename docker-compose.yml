@@ -1,8 +1,8 @@
 # OpenBB Platform API for Dokploy.
 #
 # Domain: service `openbb`, container port 6900.
-# Provider keys (FRED, FMP, …) go in the `openbb_data` volume
-# as /root/.openbb_platform/user_settings.json.
+# Provider keys: set FRED_API_KEY in Dokploy env (passed into this service).
+# OpenBB reads it at process start. The openbb_data volume is only cache.
 #
 # Valuation, auth, and the SPA live in aifinance-frontend (odp-markets).
 
@@ -24,6 +24,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
       POSTGRES_DB: ${POSTGRES_DB:-luminous}
+      FRED_API_KEY: ${FRED_API_KEY:-}
     volumes:
       - openbb_data:/root/.openbb_platform
     healthcheck:
