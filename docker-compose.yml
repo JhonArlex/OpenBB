@@ -1,0 +1,59 @@
+# OpenBB Platform API (internal) + Luminous auth gateway (public :6901).
+#
+# Usage (from this directory):
+#   docker compose up --build
+#
+# OpenBB is not published to the host. The SPA talks to :6901 only.
+# Credentials (FRED, FMP, …) stay in ~/.openbb_platform/user_settings.json.
+
+services:
+  openbb:
+    build:
+      context: ../odp-markets/services/openbb_valuation
+      dockerfile: Dockerfile
+    image: openbb-platform:odp
+    container_name: openbb-platform
+    expose:
+      - "6900"
+    environment:
+      OPENBB_AUTO_BUILD: "false"
+      DATABASE_URL: ${DATABASE_URL:-}
+      VALUATION_DATABASE_URL: ${VALUATION_DATABASE_URL:-}
+      VALUATION_SCHEMA: ${VALUATION_SCHEMA:-valuation}
+      POSTGRES_HOST: ${POSTGRES_HOST:-}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_USER: ${POSTGRES_USER:-}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+      POSTGRES_DB: ${POSTGRES_DB:-luminous}
+    volumes:
+      - ${HOME}/.openbb_platform:/root/.openbb_platform
+
+  auth:
+    build:
+      context: ../odp-markets/services/luminous_auth
+      dockerfile: Dockerfile
+    image: luminous-auth:odp
+    container_name: luminous-auth
+    ports:
+      - "6901:6901"
+    environment:
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-dev-only-change-me-use-32-bytes-min}
+      AUTH_BOOTSTRAP_EMAIL: ${AUTH_BOOTSTRAP_EMAIL:-admin@luminous.local}
+      AUTH_BOOTSTRAP_PASSWORD: ${AUTH_BOOTSTRAP_PASSWORD:-change-me-now}
+      DATABASE_URL: ${DATABASE_URL:-}
+      POSTGRES_HOST: ${POSTGRES_HOST:-}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_USER: ${POSTGRES_USER:-}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+      POSTGRES_DB: ${POSTGRES_DB:-luminous}
+      AUTH_SCHEMA: ${AUTH_SCHEMA:-auth}
+      AUTH_DB_PATH: ${AUTH_DB_PATH:-/data/users.db}
+      OPENBB_UPSTREAM: http://openbb:6900
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
+    volumes:
+      - luminous_auth_data:/data
+    depends_on:
+      - openbb
+
+volumes:
+  luminous_auth_data:
