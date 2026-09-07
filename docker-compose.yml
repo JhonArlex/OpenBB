@@ -16,6 +16,14 @@ services:
       - "6900"
     environment:
       OPENBB_AUTO_BUILD: "false"
+      DATABASE_URL: ${DATABASE_URL:-}
+      VALUATION_DATABASE_URL: ${VALUATION_DATABASE_URL:-}
+      VALUATION_SCHEMA: ${VALUATION_SCHEMA:-valuation}
+      POSTGRES_HOST: ${POSTGRES_HOST:-}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_USER: ${POSTGRES_USER:-}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+      POSTGRES_DB: ${POSTGRES_DB:-luminous}
     volumes:
       - openbb_data:/root/.openbb_platform
     healthcheck:
