@@ -1,7 +1,5 @@
-# Local DCF/WACC overlay (odp-markets) is not installed here.
-# From the OpenBB repo root, build and run with the extension:
-#   docker compose up --build
-# Image tag: openbb-platform:odp  (do not use this vanilla image for valuation routes)
+# Standalone OpenBB Platform API (Dokploy / local).
+# Valuation overlay lives in aifinance-frontend, not in this image.
 FROM python:3.10-slim-bookworm
 
 WORKDIR /app
