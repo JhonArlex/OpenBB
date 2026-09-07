@@ -27,6 +27,11 @@ services:
       FRED_API_KEY: ${FRED_API_KEY:-}
     volumes:
       - openbb_data:/root/.openbb_platform
+    networks:
+      default:
+      dokploy-network:
+        aliases:
+          - openbb-api
     healthcheck:
       test:
         [
@@ -39,6 +44,10 @@ services:
       timeout: 5s
       retries: 5
       start_period: 60s
+
+networks:
+  dokploy-network:
+    external: true
 
 volumes:
   openbb_data:
